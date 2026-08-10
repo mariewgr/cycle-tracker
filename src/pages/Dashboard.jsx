@@ -4,6 +4,7 @@ import { useStore, togglePeriodDay } from '../store.jsx'
 import { getCycleInfo, todayISO } from '../cycle.js'
 import { ARTICLES } from '../resources.js'
 import { getMoodEffects } from '../moodEffects.js'
+import { getPhysicalEffects } from '../physicalEffects.js'
 import { FACTS } from '../facts.js'
 import { getPhaseAdvice } from '../phaseAdvice.js'
 import PhaseEffects from '../components/PhaseEffects.jsx'
@@ -16,6 +17,7 @@ export default function Dashboard() {
   const info = getCycleInfo(state.periodDays, today)
   const isTodayPeriod = state.periodDays.includes(today)
   const effects = info.hasData ? getMoodEffects(info.phase) : null
+  const physicalEffects = info.hasData ? getPhysicalEffects(info.phase) : null
   const advice = info.hasData ? getPhaseAdvice(info.phase) : null
 
   return (
@@ -67,6 +69,12 @@ export default function Dashboard() {
         title="Effets possibles sur le cerveau et l'humeur"
         intro="Tendances générales observées en moyenne — pas une prédiction individuelle, ça varie beaucoup d'une femme à l'autre."
         effects={effects}
+      />
+
+      <PhaseEffects
+        title="Symptômes physiques possibles à cette phase"
+        intro="Tendances générales observées en moyenne — pas une prédiction individuelle, ça varie beaucoup d'une personne à l'autre."
+        effects={physicalEffects}
       />
 
       <PhaseAdvice advice={advice} />
