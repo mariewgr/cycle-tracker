@@ -49,6 +49,16 @@ body {
   overflow-y: auto;
 }
 
+.pull-indicator {
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: var(--ink-soft);
+  transition: height 0.15s ease;
+}
+
 .tabbar {
   position: fixed;
   bottom: 0;
@@ -241,6 +251,27 @@ body {
   color: white;
 }
 
+/* Dégradé de rouge selon l'intensité du flux : plus clair = flux léger. */
+.day-cell.flow-spotting {
+  background: #fbdcdc;
+  color: #9c3a3a;
+}
+
+.day-cell.flow-leger {
+  background: #f0a3a3;
+  color: #6e1f1f;
+}
+
+.day-cell.flow-moyen {
+  background: #d94f4f;
+  color: white;
+}
+
+.day-cell.flow-abondant {
+  background: #9c1f1f;
+  color: white;
+}
+
 .day-cell.predicted-period {
   background: var(--rose-light);
   color: var(--rose);
@@ -290,6 +321,10 @@ body {
 }
 
 .legend-swatch.period { background: var(--rose); }
+.legend-swatch.flow-spotting { background: #fbdcdc; }
+.legend-swatch.flow-leger { background: #f0a3a3; }
+.legend-swatch.flow-moyen { background: #d94f4f; }
+.legend-swatch.flow-abondant { background: #9c1f1f; }
 .legend-swatch.predicted-period { background: var(--rose-light); }
 .legend-swatch.fertile { background: var(--green-light); }
 .legend-swatch.ovulation { background: var(--green); }

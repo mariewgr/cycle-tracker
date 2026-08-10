@@ -3,6 +3,13 @@ import { useStore } from '../store.jsx'
 import { getCycleInfo, getMonthGrid, MONTH_NAMES, WEEKDAY_LABELS, todayISO } from '../cycle.js'
 import DayEditor from '../components/DayEditor.jsx'
 
+const FLOW_SLUGS = {
+  Spotting: 'spotting',
+  Léger: 'leger',
+  Moyen: 'moyen',
+  Abondant: 'abondant',
+}
+
 export default function Calendrier() {
   const { state } = useStore()
   const today = todayISO()
@@ -30,7 +37,9 @@ export default function Calendrier() {
     if (date === today) classes.push('today')
     if (date === selectedDate) classes.push('selected')
     if (state.periodDays.includes(date)) {
-      classes.push('period')
+      const flow = state.logs[date]?.flow
+      const slug = flow && FLOW_SLUGS[flow]
+      classes.push(slug ? `flow-${slug}` : 'period')
     } else if (info.hasData && date >= info.predictedNextStart && date < addDays(info.predictedNextStart, info.periodLength)) {
       classes.push('predicted-period')
     }
@@ -67,7 +76,10 @@ export default function Calendrier() {
       </div>
 
       <div className="legend">
-        <LegendItem className="period" label="Règles" />
+        <LegendItem className="flow-spotting" label="Spotting" />
+        <LegendItem className="flow-leger" label="Flux léger" />
+        <LegendItem className="flow-moyen" label="Flux moyen" />
+        <LegendItem className="flow-abondant" label="Flux abondant" />
         <LegendItem className="predicted-period" label="Règles prévues" />
         <LegendItem className="fertile" label="Fenêtre fertile" />
         <LegendItem className="ovulation" label="Ovulation" />

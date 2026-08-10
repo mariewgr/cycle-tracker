@@ -5,6 +5,7 @@ import Calendrier from './pages/Calendrier.jsx'
 import Journal from './pages/Journal.jsx'
 import Statistiques from './pages/Statistiques.jsx'
 import Parametres from './pages/Parametres.jsx'
+import PullToRefresh from './components/PullToRefresh.jsx'
 
 export default function App() {
   return (
@@ -13,7 +14,7 @@ export default function App() {
         <h1>Mon Cycle</h1>
       </header>
 
-      <main className="content">
+      <PullToRefresh className="content">
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/calendrier" element={<Calendrier />} />
@@ -21,7 +22,7 @@ export default function App() {
           <Route path="/stats" element={<Statistiques />} />
           <Route path="/parametres" element={<Parametres />} />
         </Routes>
-      </main>
+      </PullToRefresh>
 
       <nav className="tabbar">
         <NavLink to="/" end className="tab">
