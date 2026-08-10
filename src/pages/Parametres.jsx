@@ -2,14 +2,34 @@ import React, { useRef, useState } from 'react'
 import { useStore, importHealthEntries, importHealthSymptoms, restoreBackup } from '../store.jsx'
 import { parseAppleHealthExport } from '../healthImport.js'
 import { downloadBackup, readBackupFile } from '../backup.js'
+import { signIn, signOutUser } from '../sync.js'
 
 export default function Parametres() {
-  const { state, dispatch } = useStore()
+  const { state, dispatch, user, authLoading } = useStore()
   const [healthStatus, setHealthStatus] = useState(null)
   const [healthBusy, setHealthBusy] = useState(false)
   const [backupStatus, setBackupStatus] = useState(null)
+  const [syncStatus, setSyncStatus] = useState(null)
+  const [syncBusy, setSyncBusy] = useState(false)
   const healthInputRef = useRef(null)
   const backupInputRef = useRef(null)
+
+  async function handleSignIn() {
+    setSyncBusy(true)
+    setSyncStatus(null)
+    try {
+      await signIn()
+    } catch (err) {
+      setSyncStatus({ ok: false, text: err.message || String(err) })
+    } finally {
+      setSyncBusy(false)
+    }
+  }
+
+  async function handleSignOut() {
+    await signOutUser()
+    setSyncStatus(null)
+  }
 
   async function handleHealthFile(e) {
     const file = e.target.files?.[0]
@@ -56,6 +76,38 @@ export default function Parametres() {
 
   return (
     <div className="page parametres">
+      <div className="day-detail">
+        <div className="section-title">Synchronisation</div>
+        {authLoading ? (
+          <p className="empty-hint" style={{ textAlign: 'left', padding: 0 }}>
+            Vérification de la connexion...
+          </p>
+        ) : user ? (
+          <div className="day-editor">
+            <p className="empty-hint" style={{ textAlign: 'left', padding: 0 }}>
+              Connectée en tant que <strong>{user.email}</strong>. Tes données se synchronisent
+              automatiquement entre tous tes appareils connectés à ce compte.
+            </p>
+            <button className="btn btn-outline" onClick={handleSignOut}>
+              Se déconnecter
+            </button>
+          </div>
+        ) : (
+          <div className="day-editor">
+            <p className="empty-hint" style={{ textAlign: 'left', padding: 0 }}>
+              Connecte-toi pour sauvegarder tes données en ligne et les retrouver sur tes autres
+              appareils. Sans connexion, tes données restent uniquement sur cet appareil.
+            </p>
+            <button className="btn btn-primary" disabled={syncBusy} onClick={handleSignIn}>
+              {syncBusy ? 'Connexion...' : 'Se connecter avec Google'}
+            </button>
+            {syncStatus && !syncStatus.ok && (
+              <p className="empty-hint" style={{ color: '#c0392b' }}>{syncStatus.text}</p>
+            )}
+          </div>
+        )}
+      </div>
+
       <div className="day-detail">
         <div className="section-title">Importer depuis Apple Santé</div>
         <p className="empty-hint" style={{ textAlign: 'left', padding: 0 }}>

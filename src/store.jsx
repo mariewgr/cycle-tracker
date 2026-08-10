@@ -1,4 +1,7 @@
-import React, { createContext, useContext, useEffect, useReducer } from 'react'
+import React, { createContext, useContext, useEffect, useReducer, useRef, useState } from 'react'
+import { onAuthStateChanged } from 'firebase/auth'
+import { auth } from './firebase.js'
+import { pushState, subscribeToState } from './sync.js'
 
 const STORAGE_KEY = 'cycle-tracker-v1'
 
@@ -27,7 +30,7 @@ function reducer(state, action) {
       const periodDays = has
         ? state.periodDays.filter((d) => d !== date)
         : [...state.periodDays, date]
-      return { ...state, periodDays }
+      return { ...state, periodDays, savedAt: new Date().toISOString() }
     }
     case 'SET_LOG': {
       const { date, entry } = action
@@ -40,7 +43,7 @@ function reducer(state, action) {
       } else {
         nextLogs[date] = entry
       }
-      return { ...state, logs: nextLogs }
+      return { ...state, logs: nextLogs, savedAt: new Date().toISOString() }
     }
     case 'IMPORT_HEALTH_ENTRIES': {
       const periodDaysSet = new Set(state.periodDays)
@@ -53,7 +56,12 @@ function reducer(state, action) {
           nextLogs[entry.date] = { ...existing, flow: entry.flow }
         }
       }
-      return { ...state, periodDays: [...periodDaysSet].sort(), logs: nextLogs }
+      return {
+        ...state,
+        periodDays: [...periodDaysSet].sort(),
+        logs: nextLogs,
+        savedAt: new Date().toISOString(),
+      }
     }
     case 'IMPORT_HEALTH_SYMPTOMS': {
       const nextLogs = { ...state.logs }
@@ -63,10 +71,15 @@ function reducer(state, action) {
         const merged = Array.from(new Set([...(existing.symptoms || []), ...entry.symptoms]))
         nextLogs[entry.date] = { ...existing, symptoms: merged }
       }
-      return { ...state, logs: nextLogs }
+      return { ...state, logs: nextLogs, savedAt: new Date().toISOString() }
     }
     case 'RESTORE_BACKUP':
-      return { ...state, periodDays: [...action.periodDays].sort(), logs: { ...action.logs } }
+      return {
+        ...state,
+        periodDays: [...action.periodDays].sort(),
+        logs: { ...action.logs },
+        savedAt: new Date().toISOString(),
+      }
     case 'LOAD_STATE':
       return { ...action.state }
     default:
@@ -78,13 +91,48 @@ const StoreContext = createContext(null)
 
 export function StoreProvider({ children }) {
   const [state, dispatch] = useReducer(reducer, undefined, loadState)
+  const [user, setUser] = useState(null)
+  const [authLoading, setAuthLoading] = useState(true)
+  // Garde le dernier savedAt déjà envoyé/reçu, pour éviter une boucle push ↔ pull.
+  const lastSyncedAt = useRef(null)
 
   useEffect(() => {
-    const toSave = { ...state, savedAt: new Date().toISOString() }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave))
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
   }, [state])
 
-  return <StoreContext.Provider value={{ state, dispatch }}>{children}</StoreContext.Provider>
+  useEffect(() => {
+    return onAuthStateChanged(auth, (nextUser) => {
+      setUser(nextUser)
+      setAuthLoading(false)
+    })
+  }, [])
+
+  // Réception des changements distants (ex. un autre appareil connecté au même compte).
+  useEffect(() => {
+    if (!user) return
+    return subscribeToState(user.uid, (remote) => {
+      if (!remote || !remote.savedAt) return
+      if (remote.savedAt === lastSyncedAt.current) return
+      if (state.savedAt && remote.savedAt <= state.savedAt) return
+      lastSyncedAt.current = remote.savedAt
+      dispatch({ type: 'LOAD_STATE', state: remote })
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user])
+
+  // Envoi des changements locaux vers Firestore.
+  useEffect(() => {
+    if (!user) return
+    if (state.savedAt === lastSyncedAt.current) return
+    lastSyncedAt.current = state.savedAt
+    pushState(user.uid, state)
+  }, [user, state])
+
+  return (
+    <StoreContext.Provider value={{ state, dispatch, user, authLoading }}>
+      {children}
+    </StoreContext.Provider>
+  )
 }
 
 export function useStore() {
