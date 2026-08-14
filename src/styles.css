@@ -631,5 +631,15 @@ body {
     --card-bg: #2f2327;
     --border: #3d2e33;
     --rose-pale: #2f2327;
+    --rose-light: #4a2530;
+    --lavender-light: #362f47;
+    --green-light: #1f3229;
+  }
+
+  /* Ces deux-là utilisent une couleur fixe (pas var(--ink)) pensée pour un fond clair —
+     à réassombrir/réclaircir pour rester lisibles sur le vert désormais foncé. */
+  .day-cell.fertile,
+  .effect-positive .effect-group-title {
+    color: #8fd6b0;
   }
 }
