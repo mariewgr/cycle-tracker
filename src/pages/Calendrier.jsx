@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react'
 import { useStore } from '../store.jsx'
-import { getCycleInfo, getMonthGrid, MONTH_NAMES, WEEKDAY_LABELS, todayISO } from '../cycle.js'
+import { getCycleInfo, getMonthGrid, getPredictedPeriods, MONTH_NAMES, WEEKDAY_LABELS, todayISO } from '../cycle.js'
 import DayEditor from '../components/DayEditor.jsx'
 
 const FLOW_SLUGS = {
@@ -19,6 +19,7 @@ export default function Calendrier() {
   const [selectedDate, setSelectedDate] = useState(today)
 
   const info = useMemo(() => getCycleInfo(state.periodDays, today), [state.periodDays, today])
+  const predictedPeriods = useMemo(() => getPredictedPeriods(state.periodDays, 3), [state.periodDays])
   const grid = useMemo(() => getMonthGrid(year, month), [year, month])
 
   function changeMonth(delta) {
@@ -40,7 +41,7 @@ export default function Calendrier() {
       const flow = state.logs[date]?.flow
       const slug = flow && FLOW_SLUGS[flow]
       classes.push(slug ? `flow-${slug}` : 'period')
-    } else if (info.hasData && date >= info.predictedNextStart && date < addDays(info.predictedNextStart, info.periodLength)) {
+    } else if (predictedPeriods.some((p) => date >= p.startDate && date <= p.endDate)) {
       classes.push('predicted-period')
     }
     if (info.hasData && date === info.predictedOvulation) classes.push('ovulation')
@@ -100,12 +101,6 @@ function LegendItem({ className, label }) {
       <span>{label}</span>
     </div>
   )
-}
-
-function addDays(iso, n) {
-  const d = new Date(iso + 'T00:00:00')
-  d.setDate(d.getDate() + n)
-  return d.toISOString().slice(0, 10)
 }
 
 function formatLongDate(iso) {

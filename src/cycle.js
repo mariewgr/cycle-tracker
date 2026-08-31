@@ -157,6 +157,25 @@ export function getCycleInfo(periodDays, today = todayISO()) {
   }
 }
 
+// Prédit les prochaines périodes de règles (par défaut 3 cycles à venir), pour l'affichage
+// calendrier — au-delà du seul prochain cycle retourné par getCycleInfo.
+export function getPredictedPeriods(periodDays, count = 3) {
+  const periods = groupPeriodDays(periodDays)
+  if (periods.length === 0) return []
+
+  const cycleLength = computeAvgCycleLength(periods)
+  const periodLength = computeAvgPeriodLength(periods)
+  const lastPeriodStart = periods[periods.length - 1].startDate
+
+  const predictions = []
+  for (let i = 1; i <= count; i++) {
+    const startDate = addDays(lastPeriodStart, cycleLength * i)
+    const endDate = addDays(startDate, periodLength - 1)
+    predictions.push({ startDate, endDate })
+  }
+  return predictions
+}
+
 export const SYMPTOMS = [
   'Crampes',
   'Maux de tête',
