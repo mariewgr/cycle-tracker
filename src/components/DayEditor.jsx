@@ -15,6 +15,17 @@ export default function DayEditor({ date }) {
     return list.includes(item) ? list.filter((x) => x !== item) : [...list, item]
   }
 
+  function setFlow(level) {
+    const nextFlow = entry.flow === level ? null : level
+    update({ flow: nextFlow })
+    // Choisir un flux implique que c'est un jour de règles — pas besoin de le marquer
+    // séparément. On ne fait pas l'inverse (retirer le flux ne démarque pas le jour),
+    // au cas où d'autres infos du jour (symptômes, humeur) doivent rester liées aux règles.
+    if (nextFlow && !isPeriodDay) {
+      togglePeriodDay(dispatch, date)
+    }
+  }
+
   return (
     <div className="day-editor">
       <button
@@ -31,7 +42,7 @@ export default function DayEditor({ date }) {
             <button
               key={level}
               className={`chip ${entry.flow === level ? 'chip-active' : ''}`}
-              onClick={() => update({ flow: entry.flow === level ? null : level })}
+              onClick={() => setFlow(level)}
             >
               {level}
             </button>
