@@ -299,6 +299,18 @@ body {
   background: var(--lavender);
 }
 
+.day-cell.contraception-renewal::before {
+  content: '';
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #c98a2e;
+  box-shadow: 0 0 0 1.5px var(--card-bg);
+}
+
 .legend {
   display: flex;
   flex-wrap: wrap;
@@ -328,6 +340,7 @@ body {
 .legend-swatch.predicted-period { background: var(--rose-light); }
 .legend-swatch.fertile { background: var(--green-light); }
 .legend-swatch.ovulation { background: var(--green); }
+.legend-swatch.contraception-renewal-swatch { background: #c98a2e; border-radius: 50%; }
 
 .day-detail {
   background: var(--card-bg);

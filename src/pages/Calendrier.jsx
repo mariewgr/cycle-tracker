@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react'
 import { useStore } from '../store.jsx'
 import { getCycleInfo, getMonthGrid, getPredictedPeriods, MONTH_NAMES, WEEKDAY_LABELS, todayISO } from '../cycle.js'
+import { getMethod, getRenewalInfo } from '../contraception.js'
 import DayEditor from '../components/DayEditor.jsx'
 
 const FLOW_SLUGS = {
@@ -21,6 +22,14 @@ export default function Calendrier() {
   const info = useMemo(() => getCycleInfo(state.periodDays, today), [state.periodDays, today])
   const predictedPeriods = useMemo(() => getPredictedPeriods(state.periodDays, 3), [state.periodDays])
   const grid = useMemo(() => getMonthGrid(year, month), [year, month])
+
+  // Jour de renouvellement de la contraception (hors pilule, suivie au jour le jour à part).
+  const renewalDate = useMemo(() => {
+    const method = getMethod(state.contraception.method)
+    if (method?.kind !== 'renewal') return null
+    const renewal = getRenewalInfo(state.contraception.startDate, state.contraception.intervalDays, today)
+    return renewal?.dueDate || null
+  }, [state.contraception, today])
 
   function changeMonth(delta) {
     let m = month + delta
@@ -46,6 +55,7 @@ export default function Calendrier() {
     }
     if (info.hasData && date === info.predictedOvulation) classes.push('ovulation')
     else if (info.hasData && date >= info.fertileWindowStart && date <= info.fertileWindowEnd) classes.push('fertile')
+    if (date === renewalDate) classes.push('contraception-renewal')
     if (state.logs[date]) classes.push('has-log')
     return classes.join(' ')
   }
@@ -84,6 +94,7 @@ export default function Calendrier() {
         <LegendItem className="predicted-period" label="Règles prévues" />
         <LegendItem className="fertile" label="Fenêtre fertile" />
         <LegendItem className="ovulation" label="Ovulation" />
+        <LegendItem className="contraception-renewal-swatch" label="Renouvellement contraception" />
       </div>
 
       <div className="day-detail">
