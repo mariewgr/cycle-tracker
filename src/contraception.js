@@ -4,12 +4,12 @@ import { addDays, diffDays } from './cycle.js'
 
 export const METHODS = [
   { key: 'pilule', label: 'Pilule', kind: 'daily' },
-  { key: 'patch', label: 'Patch', kind: 'renewal', defaultIntervalDays: 7 },
-  { key: 'anneau', label: 'Anneau vaginal', kind: 'renewal', defaultIntervalDays: 21 },
-  { key: 'diu-hormonal', label: 'Stérilet hormonal (DIU)', kind: 'renewal', defaultIntervalDays: 365 * 5 },
-  { key: 'diu-cuivre', label: 'Stérilet au cuivre (DIU)', kind: 'renewal', defaultIntervalDays: 365 * 5 },
-  { key: 'implant', label: 'Implant', kind: 'renewal', defaultIntervalDays: 365 * 3 },
-  { key: 'injection', label: 'Injection', kind: 'renewal', defaultIntervalDays: 90 },
+  { key: 'patch', label: 'Patch', kind: 'renewal', defaultIntervalDays: 7, unit: 'days' },
+  { key: 'anneau', label: 'Anneau vaginal', kind: 'renewal', defaultIntervalDays: 21, unit: 'days' },
+  { key: 'diu-hormonal', label: 'Stérilet hormonal (DIU)', kind: 'renewal', defaultIntervalDays: 365 * 5, unit: 'years' },
+  { key: 'diu-cuivre', label: 'Stérilet au cuivre (DIU)', kind: 'renewal', defaultIntervalDays: 365 * 5, unit: 'years' },
+  { key: 'implant', label: 'Implant', kind: 'renewal', defaultIntervalDays: 365 * 3, unit: 'years' },
+  { key: 'injection', label: 'Injection', kind: 'renewal', defaultIntervalDays: 90, unit: 'days' },
   { key: 'preservatif', label: 'Préservatif', kind: 'none' },
   { key: 'aucune', label: 'Aucune', kind: 'none' },
 ]

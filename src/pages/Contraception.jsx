@@ -162,14 +162,33 @@ function RenewalTracker({ method, contraception, dispatch, today }) {
           />
         </div>
         <div className="field" style={{ marginTop: 10 }}>
-          <div className="field-label">Durée avant renouvellement (jours)</div>
-          <input
-            type="number"
-            className="date-input"
-            min="1"
-            value={contraception.intervalDays || ''}
-            onChange={(e) => updateContraception(dispatch, { intervalDays: Number(e.target.value) || null })}
-          />
+          {method.unit === 'years' ? (
+            <>
+              <div className="field-label">Durée avant renouvellement (années)</div>
+              <input
+                type="number"
+                className="date-input"
+                min="1"
+                step="1"
+                value={contraception.intervalDays ? Math.round(contraception.intervalDays / 365) : ''}
+                onChange={(e) => {
+                  const years = Number(e.target.value) || null
+                  updateContraception(dispatch, { intervalDays: years ? years * 365 : null })
+                }}
+              />
+            </>
+          ) : (
+            <>
+              <div className="field-label">Durée avant renouvellement (jours)</div>
+              <input
+                type="number"
+                className="date-input"
+                min="1"
+                value={contraception.intervalDays || ''}
+                onChange={(e) => updateContraception(dispatch, { intervalDays: Number(e.target.value) || null })}
+              />
+            </>
+          )}
           <p className="empty-hint" style={{ textAlign: 'left', padding: '4px 0 0' }}>
             {formatInterval(contraception.intervalDays)} — ajustable selon ton modèle précis de{' '}
             {method.label.toLowerCase()}.
