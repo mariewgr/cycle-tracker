@@ -1,6 +1,6 @@
 import { todayISO } from './cycle.js'
 
-const BACKUP_VERSION = 1
+const BACKUP_VERSION = 2
 
 // Exporte les données de l'app (pas un format que l'app Santé sait importer —
 // Apple Santé n'a pas de fonction "Importer un fichier", uniquement "Exporter").
@@ -12,6 +12,7 @@ export function downloadBackup(state) {
     exportedAt: new Date().toISOString(),
     periodDays: state.periodDays,
     logs: state.logs,
+    contraception: state.contraception,
   }
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
   const url = URL.createObjectURL(blob)
@@ -30,5 +31,6 @@ export async function readBackupFile(file) {
   if (data.app !== 'mon-cycle' || !Array.isArray(data.periodDays) || typeof data.logs !== 'object') {
     throw new Error("Ce fichier ne ressemble pas à une sauvegarde Mon Cycle.")
   }
-  return { periodDays: data.periodDays, logs: data.logs }
+  // contraception n'existe pas dans les sauvegardes faites avant cette fonctionnalité (v1).
+  return { periodDays: data.periodDays, logs: data.logs, contraception: data.contraception || null }
 }

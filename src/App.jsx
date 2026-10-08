@@ -4,6 +4,7 @@ import Dashboard from './pages/Dashboard.jsx'
 import Calendrier from './pages/Calendrier.jsx'
 import Journal from './pages/Journal.jsx'
 import Statistiques from './pages/Statistiques.jsx'
+import Contraception from './pages/Contraception.jsx'
 import Parametres from './pages/Parametres.jsx'
 import PullToRefresh from './components/PullToRefresh.jsx'
 
@@ -20,6 +21,7 @@ export default function App() {
           <Route path="/calendrier" element={<Calendrier />} />
           <Route path="/journal" element={<Journal />} />
           <Route path="/stats" element={<Statistiques />} />
+          <Route path="/contraception" element={<Contraception />} />
           <Route path="/parametres" element={<Parametres />} />
         </Routes>
       </PullToRefresh>
@@ -40,6 +42,10 @@ export default function App() {
         <NavLink to="/stats" className="tab">
           <span className="tab-icon">▲</span>
           <span>Stats</span>
+        </NavLink>
+        <NavLink to="/contraception" className="tab">
+          <span className="tab-icon">✚</span>
+          <span>Contra</span>
         </NavLink>
         <NavLink to="/parametres" className="tab">
           <span className="tab-icon">♥</span>

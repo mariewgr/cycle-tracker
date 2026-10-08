@@ -623,6 +623,54 @@ body {
   color: var(--ink-soft);
 }
 
+/* Contraception */
+
+.pill-history-row {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+
+.pill-day {
+  aspect-ratio: 1;
+  border: 1px solid var(--border);
+  background: var(--card-bg);
+  border-radius: 8px;
+  font-size: 11px;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+
+.pill-day-today {
+  box-shadow: inset 0 0 0 1.5px var(--rose);
+}
+
+.pill-day-taken {
+  background: var(--rose);
+  color: white;
+  border-color: var(--rose);
+}
+
+.renewal-status {
+  text-align: center;
+}
+
+.renewal-soon {
+  box-shadow: inset 0 0 0 1.5px #c98a2e;
+}
+
+.renewal-soon .hero-day {
+  color: #c98a2e;
+}
+
+.renewal-overdue {
+  box-shadow: inset 0 0 0 1.5px var(--rose);
+}
+
+.renewal-overdue .hero-day {
+  color: var(--rose);
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     --ink: #f3e8ec;

@@ -8,6 +8,13 @@ const STORAGE_KEY = 'cycle-tracker-v1'
 const initialState = {
   periodDays: [], // dates ISO marquées comme jours de règles
   logs: {}, // { 'YYYY-MM-DD': { flow, symptoms: [], mood: [], notes } }
+  contraception: {
+    method: null, // clé de contraception.js ('pilule', 'diu-hormonal', ...) ou null
+    startDate: null, // ISO : début de plaquette, ou date de pose/injection
+    intervalDays: null, // méthodes longue durée : durée avant renouvellement
+    packType: '21-7', // pilule uniquement : '21-7' (pause) ou 'continu'
+    takenDays: [], // pilule uniquement : dates ISO où la pilule a été prise
+  },
   savedAt: null,
 }
 
@@ -73,11 +80,30 @@ function reducer(state, action) {
       }
       return { ...state, logs: nextLogs, savedAt: new Date().toISOString() }
     }
+    case 'UPDATE_CONTRACEPTION': {
+      return {
+        ...state,
+        contraception: { ...state.contraception, ...action.partial },
+        savedAt: new Date().toISOString(),
+      }
+    }
+    case 'TOGGLE_PILL_DAY': {
+      const { date } = action
+      const takenDays = state.contraception.takenDays || []
+      const has = takenDays.includes(date)
+      const nextTaken = has ? takenDays.filter((d) => d !== date) : [...takenDays, date]
+      return {
+        ...state,
+        contraception: { ...state.contraception, takenDays: nextTaken },
+        savedAt: new Date().toISOString(),
+      }
+    }
     case 'RESTORE_BACKUP':
       return {
         ...state,
         periodDays: [...action.periodDays].sort(),
         logs: { ...action.logs },
+        contraception: action.contraception || initialState.contraception,
         savedAt: new Date().toISOString(),
       }
     case 'LOAD_STATE':
@@ -157,6 +183,14 @@ export function importHealthSymptoms(dispatch, entries) {
   dispatch({ type: 'IMPORT_HEALTH_SYMPTOMS', entries })
 }
 
-export function restoreBackup(dispatch, { periodDays, logs }) {
-  dispatch({ type: 'RESTORE_BACKUP', periodDays, logs })
+export function restoreBackup(dispatch, { periodDays, logs, contraception }) {
+  dispatch({ type: 'RESTORE_BACKUP', periodDays, logs, contraception })
+}
+
+export function updateContraception(dispatch, partial) {
+  dispatch({ type: 'UPDATE_CONTRACEPTION', partial })
+}
+
+export function togglePillDay(dispatch, date) {
+  dispatch({ type: 'TOGGLE_PILL_DAY', date })
 }
