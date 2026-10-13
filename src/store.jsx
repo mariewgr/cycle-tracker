@@ -14,6 +14,10 @@ const initialState = {
     intervalDays: null, // méthodes longue durée : durée avant renouvellement
     packType: '21-7', // pilule uniquement : '21-7' (pause) ou 'continu'
     takenDays: [], // pilule uniquement : dates ISO où la pilule a été prise
+    cardPhoto: null, // DIU uniquement : photo de la carte de suivi (data URL JPEG compressée)
+    model: '', // DIU uniquement : modèle inscrit sur la carte (ex. Mirena, Kyleena...)
+    lotNumber: '', // DIU uniquement : numéro de lot inscrit sur la carte
+    removalDate: null, // DIU uniquement : date de retrait inscrite sur la carte, ISO
   },
   savedAt: null,
 }

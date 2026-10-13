@@ -684,6 +684,16 @@ body {
   color: var(--rose);
 }
 
+.diu-card-photo {
+  display: block;
+  width: 100%;
+  max-height: 280px;
+  object-fit: contain;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     --ink: #f3e8ec;

@@ -1,7 +1,10 @@
-import React from 'react'
+import React, { useRef, useState } from 'react'
 import { useStore, updateContraception, togglePillDay } from '../store.jsx'
 import { todayISO, addDays } from '../cycle.js'
 import { METHODS, getMethod, formatInterval, getRenewalInfo, getPillPackInfo } from '../contraception.js'
+import { compressImage } from '../image.js'
+
+const DIU_KEYS = ['diu-hormonal', 'diu-cuivre']
 
 export default function Contraception() {
   const { state, dispatch } = useStore()
@@ -18,6 +21,10 @@ export default function Contraception() {
       intervalDays: m?.kind === 'renewal' ? m.defaultIntervalDays : null,
       packType: '21-7',
       takenDays: [],
+      cardPhoto: null,
+      model: '',
+      lotNumber: '',
+      removalDate: null,
     })
   }
 
@@ -48,6 +55,10 @@ export default function Contraception() {
 
       {method?.kind === 'renewal' && (
         <RenewalTracker method={method} contraception={contraception} dispatch={dispatch} today={today} />
+      )}
+
+      {DIU_KEYS.includes(contraception.method) && (
+        <DiuCard contraception={contraception} dispatch={dispatch} />
       )}
 
       {method?.kind === 'none' && (
@@ -145,7 +156,13 @@ function PillTracker({ state, dispatch, today }) {
 }
 
 function RenewalTracker({ method, contraception, dispatch, today }) {
-  const renewal = getRenewalInfo(contraception.startDate, contraception.intervalDays, today)
+  const isDiu = DIU_KEYS.includes(method.key)
+  const renewal = getRenewalInfo(
+    contraception.startDate,
+    contraception.intervalDays,
+    today,
+    isDiu ? contraception.removalDate : null,
+  )
 
   return (
     <>
@@ -197,7 +214,14 @@ function RenewalTracker({ method, contraception, dispatch, today }) {
         <button
           className="btn btn-outline btn-small"
           style={{ marginTop: 10 }}
-          onClick={() => updateContraception(dispatch, { startDate: today })}
+          onClick={() =>
+            updateContraception(dispatch, {
+              startDate: today,
+              // Nouveau dispositif posé : l'ancienne carte (photo, lot, date de retrait) ne
+              // correspond plus à rien, on la vide pour éviter d'afficher une info périmée.
+              ...(isDiu ? { cardPhoto: null, model: '', lotNumber: '', removalDate: null } : {}),
+            })
+          }
         >
           Marquer comme renouvelé aujourd'hui
         </button>
@@ -217,6 +241,113 @@ function RenewalTracker({ method, contraception, dispatch, today }) {
         </div>
       )}
     </>
+  )
+}
+
+function DiuCard({ contraception, dispatch }) {
+  const fileInputRef = useRef(null)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState(null)
+
+  async function handleFile(e) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    setBusy(true)
+    setError(null)
+    try {
+      // Firestore limite un document à 1 Mo ; on vise large (sous 700 ko) pour laisser de la
+      // marge au reste des données. On recompresse plus fort si la première passe dépasse.
+      const attempts = [
+        { maxDimension: 900, quality: 0.6 },
+        { maxDimension: 700, quality: 0.5 },
+        { maxDimension: 500, quality: 0.4 },
+      ]
+      let dataUrl = null
+      for (const options of attempts) {
+        dataUrl = await compressImage(file, options)
+        if (dataUrl.length < 700_000) break
+      }
+      if (dataUrl.length >= 700_000) {
+        throw new Error('Cette photo reste trop lourde même compressée — essaie une photo moins détaillée ou mieux cadrée sur la carte.')
+      }
+      updateContraception(dispatch, { cardPhoto: dataUrl })
+    } catch (err) {
+      setError(err.message || String(err))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div className="day-detail">
+      <div className="section-title">Carte de suivi</div>
+
+      {contraception.cardPhoto ? (
+        <>
+          <img src={contraception.cardPhoto} alt="Carte de suivi du DIU" className="diu-card-photo" />
+          <div className="chip-row" style={{ marginTop: 10 }}>
+            <button className="btn btn-outline btn-small" onClick={() => fileInputRef.current?.click()}>
+              Changer la photo
+            </button>
+            <button
+              className="btn btn-outline btn-small"
+              onClick={() => updateContraception(dispatch, { cardPhoto: null })}
+            >
+              Supprimer la photo
+            </button>
+          </div>
+        </>
+      ) : (
+        <button className="btn btn-secondary btn-small" disabled={busy} onClick={() => fileInputRef.current?.click()}>
+          {busy ? 'Lecture de la photo...' : 'Ajouter une photo de la carte'}
+        </button>
+      )}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        style={{ display: 'none' }}
+        onChange={handleFile}
+      />
+      {error && (
+        <p className="empty-hint" style={{ color: '#c0392b', textAlign: 'left', padding: '4px 0 0' }}>
+          {error}
+        </p>
+      )}
+
+      <div className="field" style={{ marginTop: 14 }}>
+        <div className="field-label">Modèle</div>
+        <input
+          type="text"
+          className="date-input"
+          placeholder="ex. Mirena, Kyleena, TT 380..."
+          value={contraception.model || ''}
+          onChange={(e) => updateContraception(dispatch, { model: e.target.value })}
+        />
+      </div>
+
+      <div className="field" style={{ marginTop: 10 }}>
+        <div className="field-label">Numéro de lot</div>
+        <input
+          type="text"
+          className="date-input"
+          value={contraception.lotNumber || ''}
+          onChange={(e) => updateContraception(dispatch, { lotNumber: e.target.value })}
+        />
+      </div>
+
+      <div className="field" style={{ marginTop: 10 }}>
+        <div className="field-label">Date de retrait (inscrite sur la carte)</div>
+        <input
+          type="date"
+          className="date-input"
+          value={contraception.removalDate || ''}
+          onChange={(e) => updateContraception(dispatch, { removalDate: e.target.value || null })}
+        />
+      </div>
+    </div>
   )
 }
 

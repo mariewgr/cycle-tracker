@@ -32,10 +32,12 @@ export function formatInterval(days) {
   return `${days} jour${days > 1 ? 's' : ''}`
 }
 
-// Infos de renouvellement pour les méthodes longue durée (DIU, implant, injection, patch, anneau).
-export function getRenewalInfo(startDate, intervalDays, today) {
-  if (!startDate || !intervalDays) return null
-  const dueDate = addDays(startDate, intervalDays)
+// Infos de renouvellement pour les méthodes longue durée (DIU, implant, injection, patch,
+// anneau). `explicitDueDate` (ex. date de retrait lue sur la carte de suivi d'un DIU) prime
+// sur l'estimation calculée à partir de startDate + intervalDays, quand elle est renseignée.
+export function getRenewalInfo(startDate, intervalDays, today, explicitDueDate) {
+  const dueDate = explicitDueDate || (startDate && intervalDays ? addDays(startDate, intervalDays) : null)
+  if (!dueDate) return null
   const daysUntil = diffDays(dueDate, today)
   return {
     dueDate,

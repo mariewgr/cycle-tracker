@@ -24,10 +24,17 @@ export default function Calendrier() {
   const grid = useMemo(() => getMonthGrid(year, month), [year, month])
 
   // Jour de renouvellement de la contraception (hors pilule, suivie au jour le jour à part).
+  // Pour un DIU, la date de retrait inscrite sur la carte de suivi prime sur l'estimation.
   const renewalDate = useMemo(() => {
     const method = getMethod(state.contraception.method)
     if (method?.kind !== 'renewal') return null
-    const renewal = getRenewalInfo(state.contraception.startDate, state.contraception.intervalDays, today)
+    const isDiu = method.key === 'diu-hormonal' || method.key === 'diu-cuivre'
+    const renewal = getRenewalInfo(
+      state.contraception.startDate,
+      state.contraception.intervalDays,
+      today,
+      isDiu ? state.contraception.removalDate : null,
+    )
     return renewal?.dueDate || null
   }, [state.contraception, today])
 
