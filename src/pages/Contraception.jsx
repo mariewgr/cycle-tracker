@@ -307,7 +307,6 @@ function DiuCard({ contraception, dispatch }) {
         ref={fileInputRef}
         type="file"
         accept="image/*"
-        capture="environment"
         style={{ display: 'none' }}
         onChange={handleFile}
       />
