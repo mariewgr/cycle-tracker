@@ -111,7 +111,15 @@ function reducer(state, action) {
         savedAt: new Date().toISOString(),
       }
     case 'LOAD_STATE':
-      return { ...action.state }
+      // La photo de la carte DIU ne transite jamais par la synchro (trop lourde pour
+      // Firestore, limité à 1 Mo/document) — on garde systématiquement la version locale.
+      return {
+        ...action.state,
+        contraception: {
+          ...action.state.contraception,
+          cardPhoto: state.contraception.cardPhoto,
+        },
+      }
     default:
       return state
   }
@@ -125,8 +133,14 @@ export function StoreProvider({ children }) {
   const [authLoading, setAuthLoading] = useState(true)
   // Garde le dernier savedAt déjà envoyé/reçu, pour éviter une boucle push ↔ pull.
   const lastSyncedAt = useRef(null)
+  // L'écouteur Firestore ci-dessous ne se réabonne pas à chaque changement d'état (seulement
+  // à la connexion) : il lirait sinon un `state` figé au moment de l'abonnement. Cette ref
+  // est mise à jour à chaque rendu pour que la comparaison "plus récent que le local" utilise
+  // toujours l'état courant, pas une version obsolète.
+  const stateRef = useRef(state)
 
   useEffect(() => {
+    stateRef.current = state
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
   }, [state])
 
@@ -143,19 +157,23 @@ export function StoreProvider({ children }) {
     return subscribeToState(user.uid, (remote) => {
       if (!remote || !remote.savedAt) return
       if (remote.savedAt === lastSyncedAt.current) return
-      if (state.savedAt && remote.savedAt <= state.savedAt) return
+      if (stateRef.current.savedAt && remote.savedAt <= stateRef.current.savedAt) return
       lastSyncedAt.current = remote.savedAt
       dispatch({ type: 'LOAD_STATE', state: remote })
     })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user])
 
-  // Envoi des changements locaux vers Firestore.
+  // Envoi des changements locaux vers Firestore. La photo de la carte DIU est exclue : elle
+  // peut à elle seule dépasser la limite de 1 Mo par document Firestore, ce qui ferait échouer
+  // silencieusement tout l'envoi (et donc aussi les autres changements). Elle reste locale.
   useEffect(() => {
     if (!user) return
     if (state.savedAt === lastSyncedAt.current) return
     lastSyncedAt.current = state.savedAt
-    pushState(user.uid, state)
+    const { cardPhoto, ...contraceptionWithoutPhoto } = state.contraception
+    pushState(user.uid, { ...state, contraception: contraceptionWithoutPhoto }).catch((err) => {
+      console.error('Échec de la synchronisation :', err)
+    })
   }, [user, state])
 
   return (
